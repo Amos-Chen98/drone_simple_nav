@@ -3,6 +3,8 @@
     <!-- This launch file contains the launch scripts for a single drone -->
     <arg name="target_pos_z" default='2.0' />
     <arg name="move_vel" default='2.0' />
+    <arg name="replan_mode" default='fix_time' /> 
+    <!-- available options: global, fix_time, rush -->
 
     <!-- manager node -->
     <node pkg="planner" type="manager_node.py" name="manager" output="screen">
@@ -15,6 +17,7 @@
         <rosparam file="$(find planner)/launch/planner_config.yaml" command="load"/>
         <param name="target_pos_z" value="$(arg target_pos_z)" />
         <param name="move_vel" value="$(arg move_vel)" />
+        <param name="replan_mode" value="$(arg replan_mode)" />
     </node>
 
     <!-- Visualizer -->

@@ -1,9 +1,11 @@
 <?xml version="1.0"?>
 <launch>
-    <arg name="gazebo_world" default="rand_world_30"/>
+    <arg name="gazebo_world" default="bricks"/>
     <arg name="init_pos" default="0.0, 0.0, 2.0" />
-    <arg name="target_pos_z" default="2.0" />
+    <arg name="target_pos_z" default="1.5" />
     <arg name="move_vel" default='2.0' />
+    <arg name="replan_mode" default='fix_time' /> 
+    <!-- available options: global, fix_time, rush -->
 
     <include file="$(find simulator)/launch/sim_global.launch">
         <arg name="gazebo_world" value="$(arg gazebo_world)" />
@@ -16,6 +18,7 @@
     <include file="$(find planner)/launch/single_drone_planner.launch">
         <arg name="target_pos_z" value="$(arg target_pos_z)" />
         <arg name="move_vel" value="$(arg move_vel)" />
+        <arg name="replan_mode" value="$(arg replan_mode)" />
     </include>
 
 </launch>

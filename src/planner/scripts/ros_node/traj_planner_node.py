@@ -43,13 +43,13 @@ class TrajPlanner():
         # Parameters
         a_star_config = AstarConfig()
         collision_threshold = rospy.get_param("~collision_threshold", 0.4)
-        self.replan_mode = rospy.get_param("~replan_mode", 'online')  # 'online' or 'global (plan once)'
+        self.replan_mode = rospy.get_param("~replan_mode", 'fix_time')  # available options: global, fix_time, rush
+        self.replan_period = rospy.get_param("~replan_period", 0.5)  # the interval between replanning， 0 means replan right after the previous plan
         self.planning_time_ahead = rospy.get_param("~planning_time_ahead", 1.0)  # the time ahead of the current time to plan the trajectory
         self.longitu_step_dis = rospy.get_param("~longitu_step_dis", 5.0)  # the distance forward in each replanning
         self.lateral_step_length = rospy.get_param("~lateral_step_length", 1.0)  # if local target pos in obstacle, take lateral step
         self.target_reach_threshold = rospy.get_param("~target_reach_threshold", 0.2)
         self.cmd_hz = rospy.get_param("~cmd_hz", 60)
-        self.replan_period = rospy.get_param("~replan_period", 0.5)  # the interval between replanning， 0 means replan right after the previous plan
         self.yaw_shift_tol = rospy.get_param("~yaw_shift_tol", 0.17453)
         self.move_vel = rospy.get_param("~move_vel", 1.0)
         self.target_pos_z = rospy.get_param("~target_pos_z", 2.0)
@@ -143,7 +143,7 @@ class TrajPlanner():
         self.reached_target = reached_target
         self.near_global_target = False
         self.des_state_index = 0
-        if self.replan_mode == 'periodic':
+        if self.replan_mode == 'fix_time':
             self.replan_timer.shutdown()
 
     def execute_mission(self, goal):
@@ -156,16 +156,16 @@ class TrajPlanner():
         self.init_mission()
 
         if self.replan_mode == 'global':
-            rospy.loginfo("Mission mode: global")
+            rospy.loginfo("Replan mode: global")
             self.global_planning()
-        elif self.replan_mode == 'online':
-            rospy.loginfo("Mission mode: online")
+        elif self.replan_mode == 'rush':
+            rospy.loginfo("Replan mode: rush")
             self.online_planning()
-        elif self.replan_mode == 'periodic':
-            rospy.loginfo("Mission mode: periodic")
+        elif self.replan_mode == 'fix_time':
+            rospy.loginfo("Replan mode: fix_time")
             self.periodic_planning()
         else:
-            rospy.logerr("Invalid mission mode!")
+            rospy.logerr("Invalid replan_mode!")
 
         self.report_planning_result()
 

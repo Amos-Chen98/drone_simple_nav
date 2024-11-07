@@ -1,11 +1,10 @@
 # General
-replan_mode: periodic # 'global', 'online', or 'periodic'
+replan_period: 1.0 # This is valid only when replan_mode (rosparam in traj_planner_node) is set to fix_time
 planning_time_ahead: 1.0
 longitu_step_dis: 5.0
 lateral_step_length: 1.0
 target_reach_threshold: 0.2
 cmd_hz: 60
-replan_period: 1.0
 yaw_shift_tol: 0.17453
 
 # A star
