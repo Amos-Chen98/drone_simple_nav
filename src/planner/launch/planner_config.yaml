@@ -1,0 +1,17 @@
+# General
+replan_mode: periodic # 'global', 'online', or 'periodic'
+planning_time_ahead: 1.0
+longitu_step_dis: 5.0
+lateral_step_length: 1.0
+target_reach_threshold: 0.2
+cmd_hz: 60
+replan_period: 1.0
+yaw_shift_tol: 0.17453
+
+# A star
+resolution: 0.2
+min_flight_height: 1.0
+max_flight_height: 4.0
+
+# PCL
+collision_threshold: 0.4

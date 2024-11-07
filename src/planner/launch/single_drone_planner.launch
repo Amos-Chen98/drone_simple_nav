@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<launch>
+    <!-- This launch file contains the launch scripts for a single drone -->
+    <arg name="target_pos_z" default='2.0' />
+    <arg name="move_vel" default='2.0' />
+
+    <!-- manager node -->
+    <node pkg="planner" type="manager_node.py" name="manager" output="screen">
+        <rosparam file="$(find planner)/launch/manager_config.yaml" command="load"/>
+        <param name="target_pos_z" value="$(arg target_pos_z)" />
+    </node>
+
+    <!-- traj planner node -->
+    <node pkg="planner" type="traj_planner_node.py" name="planner" output="screen">
+        <rosparam file="$(find planner)/launch/planner_config.yaml" command="load"/>
+        <param name="target_pos_z" value="$(arg target_pos_z)" />
+        <param name="move_vel" value="$(arg move_vel)" />
+    </node>
+
+    <!-- Visualizer -->
+    <node pkg="planner" type="visualizer_node.py" name="visualizer" />
+
+    <!-- TF -->
+    <include file="$(find planner)/launch/tf_server.launch" />
+
+</launch>

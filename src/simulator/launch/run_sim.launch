@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="gazebo_world" default="rand_world_30"/>
+    <arg name="init_pos" default="0.0, 0.0, 2.0" />
+    <arg name="target_pos_z" default="2.0" />
+    <arg name="move_vel" default='2.0' />
+
+    <include file="$(find simulator)/launch/sim_global.launch">
+        <arg name="gazebo_world" value="$(arg gazebo_world)" />
+    </include>
+
+    <node pkg="simulator" type="mavros_node.py" name="mavros_node" output="screen">
+        <param name="init_pos" value="$(arg init_pos)" />
+    </node>
+
+    <include file="$(find planner)/launch/single_drone_planner.launch">
+        <arg name="target_pos_z" value="$(arg target_pos_z)" />
+        <arg name="move_vel" value="$(arg move_vel)" />
+    </include>
+
+</launch>

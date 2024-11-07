@@ -1,0 +1,2 @@
+recording_rosbag: False
+mission_mode: "manual" # 'manual', 'random', or 'predefined'
