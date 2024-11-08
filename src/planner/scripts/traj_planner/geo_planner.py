@@ -12,18 +12,17 @@ import time
 
 
 class GeoPlanner(TrajUtils):
-    def __init__(self, a_star_config, move_vel):
+    def __init__(self, a_star_config, move_vel, cmd_hz):
         super().__init__()
         self.astar_planner = AstarPlanner(a_star_config)
         self.s = 3
         self.D = 3
         self.move_vel = move_vel
+        self.cmd_hz = cmd_hz
 
     def geo_traj_plan(self, map, plan_init_state, target_state):
         start_pos = plan_init_state.global_pos
         target_pos = target_state[0]
-        start_vel = plan_init_state.global_vel
-        target_vel = target_state[1]
 
         time_start = time.time()
         path = self.astar_planner.plan(map, start_pos, target_pos)
@@ -35,42 +34,32 @@ class GeoPlanner(TrajUtils):
 
         path = self.prune_path_nodes(map, path)
 
-        if len(path) == 2:  # Means the path directly connects the start_pos and target_pos
-            print("Straight line trajectory!")
-            path_length = np.linalg.norm(np.array(path[0]) - np.array(path[1]))
-            total_time = path_length / self.move_vel
-            sample_num = int(total_time * 60 + 1)
+        des_state = []
 
-            des_pos = np.linspace(start_pos, target_pos, sample_num)
-            des_vel = np.linspace(start_vel, target_vel, sample_num)
-            des_acc = np.zeros((sample_num, 3))
+        for i in range(len(path) - 1):
+            seg_start = np.array(path[i])
+            seg_end = np.array(path[i + 1])
+            seg_unit_dir = (seg_end - seg_start) / np.linalg.norm(seg_end - seg_start)
+            seg_length = np.linalg.norm(seg_end - seg_start)
+            seg_time = seg_length / self.move_vel
+            sample_num = int(seg_time * self.cmd_hz) + 1
+            seg_vel = self.move_vel * seg_unit_dir
+            seg_acc = np.zeros(3)
 
-            des_state = np.zeros((sample_num, 3, self.D))  # 3*D: [pos, vel, acc].T * D
+            des_pos = np.linspace(seg_start, seg_end, sample_num)[1:]
+            des_vel = np.tile(seg_vel, (sample_num - 1, 1))
+            des_acc = np.tile(seg_acc, (sample_num - 1, 1))
 
-            des_state[:, 0, :] = des_pos
-            des_state[:, 1, :] = des_vel
-            des_state[:, 2, :] = des_acc
+            seg_des_state = np.zeros((sample_num - 1, 3, self.D))  # 3*D: [pos, vel, acc].T * D
 
-        else:
-            print("Minimum jerk trajectory!")
-            path = path[1:-1]  # remove the first and last element of the path
+            seg_des_state[:, 0, :] = des_pos
+            seg_des_state[:, 1, :] = des_vel
+            seg_des_state[:, 2, :] = des_acc
 
-            path_all = np.concatenate((np.array([start_pos]),
-                                       np.array(path),
-                                       np.array([target_pos])), axis=0)
+            des_state.append(seg_des_state)
 
-            # calculate the distance between each two points in path_all
-            distances = np.linalg.norm(np.diff(path_all, axis=0), axis=1)
-
-            ts = distances / self.move_vel
-
-            head_state = np.array([start_pos, start_vel])
-            int_wpts = np.array(path).T
-
-            self.read_planning_condition(head_state, target_state, int_wpts, ts)
-
-            des_state = self.get_full_state_cmd()
-
+        des_state = np.concatenate(des_state, axis=0)
+        
         return des_state
 
     def read_planning_condition(self, head_state, tail_state, int_wpts, ts):

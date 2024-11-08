@@ -55,7 +55,7 @@ class TrajPlanner():
         self.target_pos_z = rospy.get_param("~target_pos_z", 2.0)
 
         # Planner
-        self.planner = GeoPlanner(a_star_config, self.move_vel)
+        self.planner = GeoPlanner(a_star_config, self.move_vel, self.cmd_hz)
         self.map = PCLServer(collision_threshold)
         self.visualizer = Visualizer()
         self.drone_state = DroneState()
