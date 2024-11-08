@@ -12,22 +12,18 @@ import time
 
 
 class GeoPlanner(TrajUtils):
-    def __init__(self, a_star_config):
+    def __init__(self, a_star_config, move_vel):
         super().__init__()
         self.astar_planner = AstarPlanner(a_star_config)
         self.s = 3
         self.D = 3
-        self.avg_speed = 2.0  # m/s
+        self.move_vel = move_vel
 
     def geo_traj_plan(self, map, plan_init_state, target_state):
         start_pos = plan_init_state.global_pos
-        # target_pos = np.array([target_state[0][0], target_state[0][1], plan_init_state.global_pos[2]])
         target_pos = target_state[0]
         start_vel = plan_init_state.global_vel
-        # target_vel = np.array([target_state[1][0], target_state[1][1], 0.0])
         target_vel = target_state[1]
-
-        # target_state = np.vstack((target_pos, target_vel))
 
         time_start = time.time()
         path = self.astar_planner.plan(map, start_pos, target_pos)
@@ -42,7 +38,7 @@ class GeoPlanner(TrajUtils):
         if len(path) == 2:  # Means the path directly connects the start_pos and target_pos
             print("Straight line trajectory!")
             path_length = np.linalg.norm(np.array(path[0]) - np.array(path[1]))
-            total_time = path_length / self.avg_speed
+            total_time = path_length / self.move_vel
             sample_num = int(total_time * 60 + 1)
 
             des_pos = np.linspace(start_pos, target_pos, sample_num)
@@ -66,7 +62,7 @@ class GeoPlanner(TrajUtils):
             # calculate the distance between each two points in path_all
             distances = np.linalg.norm(np.diff(path_all, axis=0), axis=1)
 
-            ts = distances / self.avg_speed
+            ts = distances / self.move_vel
 
             head_state = np.array([start_pos, start_vel])
             int_wpts = np.array(path).T
