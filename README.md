@@ -7,7 +7,7 @@ This is a minimum implementation of drone navigation.
 **How it works:**
 
 1. One ROS node reads a local point cloud file and streams the point cloud through a ROS topic of type [sensor_msgs/PointCloud2](https://docs.ros.org/en/jade/api/sensor_msgs/html/msg/PointCloud2.html). Collision check is performed using the point cloud.
-2. The planner uses A* to generate a collision-free path. If the path is a direct line from start to target, a simple straight trajectory is created; otherwise, a minimum-jerk trajectory is generated.
+2. The planner uses A* to generate a collision-free path. Then a simple trajectory of constant speed is generated from the path.
 3. Real-time position and velocity commands are derived from the trajectory and used for visualization. The commands follow the data structure defined in [mavros_msgs/PositionTarget](https://docs.ros.org/en/jade/api/mavros_msgs/html/msg/PositionTarget.html).
 
 ## **Installation**
