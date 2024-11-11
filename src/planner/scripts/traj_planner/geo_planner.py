@@ -23,7 +23,9 @@ class GeoPlanner(TrajUtils):
     def geo_traj_plan(self, map, plan_init_state, target_state):
         start_pos = plan_init_state.global_pos
         target_pos = target_state[0]
-
+        start_vel = plan_init_state.global_vel
+        target_vel = target_state[1]
+        
         time_start = time.time()
         path = self.astar_planner.plan(map, start_pos, target_pos)
         time_end = time.time()
