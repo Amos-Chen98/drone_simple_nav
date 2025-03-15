@@ -170,6 +170,7 @@ catkin_install_python(PROGRAMS
     scripts/ros_node/manager_node.py
     scripts/ros_node/traj_planner_node.py
     scripts/ros_node/visualizer_node.py
+    scripts/ros_node/collision_test_node.py
     DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
