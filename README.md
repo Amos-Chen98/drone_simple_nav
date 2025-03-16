@@ -6,9 +6,8 @@ This is a minimum implementation of drone navigation.
 
 **How it works:**
 
-1. One ROS node reads a local point cloud file and streams the point cloud through a ROS topic of type [sensor_msgs/PointCloud2](https://docs.ros.org/en/jade/api/sensor_msgs/html/msg/PointCloud2.html). Collision check is performed using the point cloud.
-2. The planner uses A* to generate a collision-free path. Then a simple trajectory of constant speed is generated from the path.
-3. Real-time position and velocity commands are derived from the trajectory and used for visualization. The commands follow the data structure defined in [mavros_msgs/PositionTarget](https://docs.ros.org/en/jade/api/mavros_msgs/html/msg/PositionTarget.html).
+1. The planner uses A* to generate a collision-free path. Then a simple trajectory of constant speed is generated from the path.
+2. Real-time position and velocity commands are derived from the trajectory and used for visualization. The commands follow the data structure defined in [mavros_msgs/PositionTarget](https://docs.ros.org/en/jade/api/mavros_msgs/html/msg/PositionTarget.html).
 
 ## **Installation**
 
@@ -26,6 +25,21 @@ pip install transitions[diagrams]
 
 # Optional (not used in simulation, for debug only)
 sudo apt install ros-noetic-octovis
+```
+
+Manually compile and install octomap (a Python binding of the original octomap package): In your preferred path, run
+
+```bash
+sudo apt update
+sudo apt install -y git cmake build-essential liboctomap-dev
+git clone https://github.com/OctoMap/octomap.git
+cd octomap
+mkdir build
+cd build
+cmake ..
+make -j$(nproc)
+sudo make install
+pip install pybind11
 ```
 
 Then, install this project as a ROS workspace
@@ -48,6 +62,11 @@ roslaunch simulator run_sim.launch
 RViz will pop up, then you can set the global target using `2D Nav Goal`. The drone will perform 3D planning and fly to the target.
 
 Currently, the z position of the target is set in `src/simulator/launch/run_sim.launch`.
+
+There are two ways of performing collision check:
+
+1. Using Octomap (default): The octomap is loaded from a local .bt file. Collision checking is conducted by verifying whether the selected point and its neighboring points exist within the Octree.
+2. KDtree in PCL: One ROS node reads a local point cloud file and streams the point cloud through a ROS topic of type [sensor_msgs/PointCloud2](https://docs.ros.org/en/jade/api/sensor_msgs/html/msg/PointCloud2.html). Collision check is performed using the point cloud.
 
 There are three available navigation modes, controlled by the argument `replan_mode` in `src/simulator/launch/run_sim.launch`.
 
