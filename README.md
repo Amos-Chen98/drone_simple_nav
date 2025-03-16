@@ -18,12 +18,14 @@ ROS1: https://wiki.ros.org/noetic/Installation/Ubuntu
 
 ```bash
 sudo apt install ros-noetic-octomap*
-sudo apt install ros-noetic-octovis
 sudo apt install graphviz graphviz-dev
 pip install octomap-python
 pip install pyquaternion
 pip install scipy
 pip install transitions[diagrams]
+
+# Optional (not used in simulation, for debug only)
+sudo apt install ros-noetic-octovis
 ```
 
 Then, install this project as a ROS workspace
@@ -92,7 +94,7 @@ roslaunch simulator load_world.launch gazebo_world:=<your_world_file>
 rosservice call /world/build_octomap '{bounding_box_origin: {x: 0, y: 0, z: 15}, bounding_box_lengths: {x: 30, y: 30, z: 30}, leaf_size: 0.1, filename: output_filename.bt}'
 ```
 
-Then the .pcd file and the .bt file will be generated in your current path.
+Then the .pcd file and the .bt file will be generated in the path: /home/{username}/.ros/.
 
 The `rosservice` call includes adjustable variables: the bounding box origin and lengths, both in meters. 
 
