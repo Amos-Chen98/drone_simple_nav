@@ -8,9 +8,9 @@ cmd_hz: 60
 yaw_shift_tol: 0.17453
 
 # A star
-resolution: 0.2
+resolution: 0.25
 min_flight_height: 1.0
 max_flight_height: 4.0
 
-# PCL
-collision_threshold: 0.4
+# Collision check
+collision_threshold: 0.2

@@ -17,6 +17,7 @@ import rospy
 from visualization_msgs.msg import Marker, MarkerArray
 from visualizer.visualizer import Visualizer
 from traj_planner.geo_planner import GeoPlanner
+from map_server.octree_server import OctreeServer
 
 
 class DroneState():
@@ -53,10 +54,28 @@ class TrajPlanner():
         self.yaw_shift_tol = rospy.get_param("~yaw_shift_tol", 0.17453)
         self.move_vel = rospy.get_param("~move_vel", 1.0)
         self.target_pos_z = rospy.get_param("~target_pos_z", 2.0)
+        map_server = rospy.get_param("~map_server", "octomap")  # available options: octomap, pcl
+
+        if map_server == "octomap":
+            bt_filepath = rospy.get_param("~bt_filepath", None)
+            if bt_filepath is not None:
+                rospy.loginfo("Using Octomap to perform collision check")
+                rospy.loginfo("Building octomap from local file: " + str(bt_filepath))
+            else:
+                rospy.logerr("No octomap file provided!")
+
+            self.map = OctreeServer(bt_filepath, resolution=0.1, collision_threshold=collision_threshold) # the param 0.1 should be idential to the local bt file, which is determined manully
+
+        elif map_server == "pcl":
+            rospy.loginfo("Using PCL to perform collision check")
+            self.map = PCLServer(collision_threshold)
+            self.pcl_sub = rospy.Subscriber('/pointcloud/output', PointCloud2, self.map.pcl_cb)
+
+        else:
+            rospy.logerr("Invalid map_server! Please specify 'octomap' or 'pcl'")
 
         # Planner
         self.planner = GeoPlanner(a_star_config, self.move_vel, self.cmd_hz)
-        self.map = PCLServer(collision_threshold)
         self.visualizer = Visualizer()
         self.drone_state = DroneState()
         self.state_cmd = PositionTarget()
@@ -79,7 +98,6 @@ class TrajPlanner():
 
         # Subscribers
         self.flight_state_sub = rospy.Subscriber('mavros/state', State, self.flight_state_cb)
-        self.pcl_sub = rospy.Subscriber('/pointcloud/output', PointCloud2, self.map.pcl_cb)
         self.odom_sub = rospy.Subscriber('mavros/local_position/odom', Odometry, self.odom_cb)
 
         # Publishers
