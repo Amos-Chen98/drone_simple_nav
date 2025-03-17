@@ -2,13 +2,14 @@ import os
 import sys
 current_path = os.path.abspath(os.path.dirname(__file__))[:-9]  # -9 removes '/ros_node'
 sys.path.insert(0, current_path)
-import time
-import numpy as np
-import rospy
-import octomap
-from sensor_msgs.msg import PointCloud2
 from map_server.pcl_server import PCLServer
-
+from sensor_msgs.msg import PointCloud2
+import octomap
+import rospy
+import numpy as np
+import time
+import struct
+from octomap_msgs.msg import Octomap
 
 
 class CollisionTest():
@@ -19,20 +20,49 @@ class CollisionTest():
         # PCL
         self.pcl = PCLServer(0.1)  # safe dis = 0.1
         self.pcl_sub = rospy.Subscriber('/pointcloud/output', PointCloud2, self.pcl.pcl_cb)
+        self.octomap_sub = rospy.Subscriber('/octomap_binary', Octomap, self.octomap_cb)
 
         # Octomap (Octree)
         self.octree = None
-        bt_filename = "bt_files/bricks.bt"
-        bt_filepath = current_path + '/' + bt_filename
-        self.build_octree_from_file(bt_filepath)
 
         rospy.sleep(3)  # to make sure the PCL is loaded from topic
 
         # Run collision test
         for _ in range(3):
             self.run_collision_test()
-        
+
         print("Collision test finished")
+
+    def octomap_cb(self, msg):
+        try:
+            file_header = "# Octomap OcTree binary file\n"
+            file_header += "id " + msg.id + "\n"
+            file_header += "size 10\n"  # This value is just a placeholder.
+            file_header += "res " + str(msg.resolution) + "\n"
+            file_header += "data\n"
+
+            header_bytes = file_header.encode('utf-8')
+
+            length = len(msg.data)
+            pattern = '<%db' % length
+            data_bytes = struct.pack(pattern, *msg.data)
+
+            complete_data = header_bytes + data_bytes
+
+            tmp_octree = octomap.OcTree(msg.resolution)
+            tmp_octree.readBinary(complete_data)
+            actual_size = tmp_octree.size()
+
+            # repalce the placeholder with the actual size
+            file_header = file_header.replace("size 10", "size " + str(actual_size))
+            header_bytes = file_header.encode('utf-8')
+            complete_data = header_bytes + data_bytes
+
+            self.octree = octomap.OcTree(msg.resolution)
+            self.octree.readBinary(complete_data)  # Read from memory
+
+        except Exception as e:
+            rospy.logerr(f"Error in octomap_cb: {e}")
 
     def run_collision_test(self):
         print("\nRunning batch collision test")
@@ -47,23 +77,6 @@ class CollisionTest():
         self.batch_collision_test_octree(points)
         time_end = time.time()
         print("[Octomap] Time elapsed: ", time_end - time_start)
-
-    def build_octree_from_file(self, bt_filepath):
-        self.octree = octomap.OcTree(0.1)  # resolution is 0.1
-        success = self.octree.readBinary(bt_filepath.encode())  # Ref: https://github.com/wkentaro/octomap-python/issues/10
-        if success:
-            rospy.loginfo("OctoMap successfully loaded!")
-            # print("Nodes: ", self.octree.getNumLeafNodes())
-            # print("Depth: ", self.octree.getTreeDepth())
-            # print("Resolution: ", self.octree.getResolution())
-            # print("Volume: ", self.octree.volume())
-            # print("Memory: ", self.octree.memoryUsage())
-            # print("Memory Full Grid: ", self.octree.memoryFullGrid())
-            # print("Size: ", self.octree.size())
-            # print("Num Nodes: ", self.octree.calcNumNodes())
-            # print("Num Leaf Nodes: ", self.octree.getNumLeafNodes())
-        else:
-            rospy.logerr("Failed to load OctoMap from binary data")
 
     def is_collision_octree(self, point):
         if self.octree is None:
