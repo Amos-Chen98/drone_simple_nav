@@ -8,8 +8,6 @@
     <!-- available options: global, fix_time, rush -->
     <arg name="map_server" default="octomap" />
     <!-- available options: octomap, pcl -->
-    <arg name="bt_filepath" default="$(find simulator)/worlds/$(arg gazebo_world).bt" />
-    <!-- The octomap is built from the local bt file -->
 
     <include file="$(find simulator)/launch/sim_global.launch">
         <arg name="gazebo_world" value="$(arg gazebo_world)" />
@@ -24,7 +22,6 @@
         <arg name="move_vel" value="$(arg move_vel)" />
         <arg name="replan_mode" value="$(arg replan_mode)" />
         <arg name="map_server" value="$(arg map_server)" />
-        <arg name="bt_filepath" value="$(arg bt_filepath)" />
     </include>
 
 </launch>

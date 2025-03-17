@@ -2,21 +2,45 @@ import numpy as np
 import rospy
 import octomap
 import math
+import struct
+import time
 
 
 class OctreeServer():
-    def __init__(self, bt_filepath, resolution=0.1, collision_threshold=0.2):
+    def __init__(self, collision_threshold=0.2):
         self.octree = None
-        self.build_octree_from_file(bt_filepath, resolution)
         self.neighbor_dis = collision_threshold
 
-    def build_octree_from_file(self, bt_filepath, resolution):
-        self.octree = octomap.OcTree(resolution)  # resolution is 0.1
-        success = self.octree.readBinary(bt_filepath.encode())  # Ref: https://github.com/wkentaro/octomap-python/issues/10
-        if success:
-            rospy.loginfo("OcTree successfully loaded!")
-        else:
-            rospy.logerr("Failed to load OctoMap from binary data")
+    def octomap_cb(self, msg):
+        try:
+            file_header = "# Octomap OcTree binary file\n"
+            file_header += "id " + msg.id + "\n"
+            file_header += "size 10\n"  # This value is just a placeholder.
+            file_header += "res " + str(msg.resolution) + "\n"
+            file_header += "data\n"
+
+            header_bytes = file_header.encode('utf-8')
+
+            length = len(msg.data)
+            pattern = '<%db' % length
+            data_bytes = struct.pack(pattern, *msg.data)
+
+            complete_data = header_bytes + data_bytes
+
+            tmp_octree = octomap.OcTree(msg.resolution)
+            tmp_octree.readBinary(complete_data)
+            actual_size = tmp_octree.size()
+
+            # repalce the placeholder with the actual size
+            file_header = file_header.replace("size 10", "size " + str(actual_size))
+            header_bytes = file_header.encode('utf-8')
+            complete_data = header_bytes + data_bytes
+
+            self.octree = octomap.OcTree(msg.resolution)
+            self.octree.readBinary(complete_data)  # Read from memory
+
+        except Exception as e:
+            rospy.logerr(f"Error in octomap_cb: {e}")
 
     def is_point_occupied(self, point):
         if self.octree is None:
@@ -32,31 +56,28 @@ class OctreeServer():
 
         return False
 
-    def has_collision(self, point):
-        '''
-        input: point: a 3-element list [x, y, z], or numpy array
-        return: True if the point is in collision, False otherwise
-        '''
-        offsets = np.array([-self.neighbor_dis, 0, self.neighbor_dis])
-        for dx in offsets:
-            for dy in offsets:
-                for dz in offsets:
-                    if self.is_point_occupied([point[0] + dx, point[1] + dy, point[2] + dz]):
-                        return True
+    def has_collision(self, point, scaling=1.0):
+        if self.is_point_occupied(point):
+            return True
+
+        main_offsets = [
+            [self.neighbor_dis * scaling, 0, 0],
+            [-self.neighbor_dis * scaling, 0, 0],
+            [0, self.neighbor_dis * scaling, 0],
+            [0, -self.neighbor_dis * scaling, 0],
+            [0, 0, self.neighbor_dis * scaling],
+            [0, 0, -self.neighbor_dis * scaling]
+        ]
+
+        for offset in main_offsets:
+            check_point = [point[0] + offset[0], point[1] + offset[1], point[2] + offset[2]]
+            if self.is_point_occupied(check_point):
+                return True
+
         return False
 
     def has_collision_strict(self, point):
-        '''
-        This is a more strict version of has_collision, which uses a larger threshold
-        This is used for obtaining local target point, since one segment determined by two feasible points may not be feasible, we need to make sure the target point is safe enough
-        '''
-        offsets = np.array([-self.neighbor_dis, 0, self.neighbor_dis]) * 1.5
-        for dx in offsets:
-            for dy in offsets:
-                for dz in offsets:
-                    if self.is_point_occupied([point[0] + dx, point[1] + dy, point[2] + dz]):
-                        return True
-        return False
+        return self.has_collision(point, scaling=1.5)
 
     def seg_feasible_check(self, head_pos, tail_pos, step_size=0.1):
         '''

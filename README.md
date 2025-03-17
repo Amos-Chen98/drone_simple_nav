@@ -18,7 +18,6 @@ ROS1: https://wiki.ros.org/noetic/Installation/Ubuntu
 ```bash
 sudo apt install ros-noetic-octomap*
 sudo apt install graphviz graphviz-dev
-pip install octomap-python
 pip install pyquaternion
 pip install scipy
 pip install transitions[diagrams]
@@ -27,7 +26,11 @@ pip install transitions[diagrams]
 sudo apt install ros-noetic-octovis
 ```
 
-Manually compile and install octomap (a Python binding of the original octomap package): In your preferred path, run
+Install octomap-python (Python binding of the OctoMap library) following the instructions: https://github.com/wkentaro/octomap-python. Please also run the example to test the installation.
+
+If you encounter errors with octomap-python, try installing it manually.
+
+The following is an untested solution: in your preferred directory,
 
 ```bash
 sudo apt update
@@ -65,7 +68,7 @@ Currently, the z position of the target is set in `src/simulator/launch/run_sim.
 
 There are two ways of performing collision check:
 
-1. Using Octomap (default): The octomap is loaded from a local .bt file. Collision checking is conducted by verifying whether the selected point and its neighboring points exist within the Octree.
+1. Using Octomap (default): The octomap is loaded from a ROS topic. (TBD: currently, it continuously outputs error messages in the terminal like `ERROR: Tree size mismatch: # read nodes (153918) != # expected nodes (10)`. This is because the octree builder must attempt this once to retrieve the correct tree size. This does not impact the program.) Collision checking is conducted by verifying whether the selected point and its neighboring points exist within the Octree.
 2. KDtree in PCL: One ROS node reads a local point cloud file and streams the point cloud through a ROS topic of type [sensor_msgs/PointCloud2](https://docs.ros.org/en/jade/api/sensor_msgs/html/msg/PointCloud2.html). Collision check is performed using the point cloud.
 
 There are three available navigation modes, controlled by the argument `replan_mode` in `src/simulator/launch/run_sim.launch`.

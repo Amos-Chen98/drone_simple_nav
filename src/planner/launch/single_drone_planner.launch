@@ -7,7 +7,6 @@
     <!-- available options: global, fix_time, rush -->
     <arg name="map_server" default="octomap" />
     <!-- available options: octomap, pcl -->
-    <arg name="bt_filepath" default="$(find simulator)/worlds/bricks.bt" />
 
     <!-- manager node -->
     <node pkg="planner" type="manager_node.py" name="manager" output="screen">
@@ -22,7 +21,6 @@
         <param name="move_vel" value="$(arg move_vel)" />
         <param name="replan_mode" value="$(arg replan_mode)" />
         <param name="map_server" value="$(arg map_server)" />
-        <param name="bt_filepath" value="$(arg bt_filepath)" />
     </node>
 
     <!-- Visualizer -->

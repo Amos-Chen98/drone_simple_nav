@@ -18,6 +18,7 @@ from visualization_msgs.msg import Marker, MarkerArray
 from visualizer.visualizer import Visualizer
 from traj_planner.geo_planner import GeoPlanner
 from map_server.octree_server import OctreeServer
+from octomap_msgs.msg import Octomap
 
 
 class DroneState():
@@ -57,14 +58,9 @@ class TrajPlanner():
         map_server = rospy.get_param("~map_server", "octomap")  # available options: octomap, pcl
 
         if map_server == "octomap":
-            bt_filepath = rospy.get_param("~bt_filepath", None)
-            if bt_filepath is not None:
-                rospy.loginfo("Using Octomap to perform collision check")
-                rospy.loginfo("Building octomap from local file: " + str(bt_filepath))
-            else:
-                rospy.logerr("No octomap file provided!")
-
-            self.map = OctreeServer(bt_filepath, resolution=0.1, collision_threshold=collision_threshold) # the param 0.1 should be idential to the local bt file, which is determined manully
+            rospy.loginfo("Using Octomap to perform collision check")
+            self.map = OctreeServer(collision_threshold)
+            self.octomap_sub = rospy.Subscriber('/octomap_binary', Octomap, self.map.octomap_cb)
 
         elif map_server == "pcl":
             rospy.loginfo("Using PCL to perform collision check")
